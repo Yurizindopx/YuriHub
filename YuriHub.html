@@ -1,0 +1,158 @@
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+   Name = "Blox Fruits - Auto Bounty Hub",
+   LoadingTitle = "Auto Bounty Hub",
+   LoadingSubtitle = "by Yurixy",
+   ConfigurationSaving = {
+      Enabled = false
+   },
+   Discord = {Enabled = false},
+   KeySystem = false
+})
+
+
+local MainTab = Window:CreateTab("Main", 4483362458)
+
+MainTab:CreateToggle({
+   Name = "Auto Bounty",
+   CurrentValue = false,
+   Flag = "AutoBounty",
+   Callback = function(Value)
+      getgenv().AutoBounty = Value
+      if Value then AutoBountyStart() end
+   end,
+})
+
+MainTab:CreateToggle({
+   Name = "Silent Aim (Câmera livre)",
+   CurrentValue = false,
+   Flag = "SilentAim",
+   Callback = function(Value)
+      getgenv().SilentAim = Value
+   end,
+})
+
+MainTab:CreateToggle({
+   Name = "Expand Hitbox",
+   CurrentValue = false,
+   Flag = "Hitbox",
+   Callback = function(Value)
+      getgenv().HitboxSize = Value and 25 or 2
+      for _,v in pairs(game:GetService("Players"):GetPlayers()) do
+         if v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+            v.Character.HumanoidRootPart.Size = Vector3.new(getgenv().HitboxSize, getgenv().HitboxSize, getgenv().HitboxSize)
+            v.Character.HumanoidRootPart.Transparency = Value and 0.8 or 1
+            v.Character.HumanoidRootPart.Material = Value and Enum.Material.ForceField or Enum.Material.Plastic
+         end
+      end
+   end,
+})
+
+MainTab:CreateToggle({
+   Name = "Auto Skills (Z,X,C,V,F)",
+   CurrentValue = false,
+   Flag = "AutoSkills",
+   Callback = function(Value)
+      getgenv().AutoSkills = Value
+      if Value then
+         spawn(function()
+            while getgenv().AutoSkills do
+               for _, key in pairs({"Z","X","C","V","F"}) do
+                  game:GetService("VirtualInputManager"):SendKeyEvent(true, key, false, game)
+                  wait(0.1)
+                  game:GetService("VirtualInputManager"):SendKeyEvent(false, key, false, game)
+                  wait(1.5)
+               end
+               wait(0.3)
+            end
+         end)
+      end
+   end,
+})
+
+MainTab:CreateToggle({
+   Name = "ZzZ Aimbot",
+   CurrentValue = false,
+   Flag = "ZzZAim",
+   Callback = function(Value)
+      getgenv().ZzZAim = Value
+      if Value then
+         spawn(function()
+            local function GetClosestEnemy()
+               local player = game.Players.LocalPlayer
+               local closest, dist = nil, math.huge
+               for _,v in pairs(game.Players:GetPlayers()) do
+                  if v ~= player and v.Team ~= player.Team and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+                     local mag = (v.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+                     if mag < dist then
+                        closest = v
+                        dist = mag
+                     end
+                  end
+               end
+               return closest
+            end
+
+            local mt = getrawmetatable(game)
+            local __namecall = mt.__namecall
+            setreadonly(mt, false)
+            mt.__namecall = newcclosure(function(...)
+               local args = {...}
+               local method = getnamecallmethod()
+               if method == "FireServer" and args[2] and typeof(args[2]) == "table" and getgenv().ZzZAim then
+                  local closest = GetClosestEnemy()
+                  if closest and closest.Character and closest.Character:FindFirstChild("HumanoidRootPart") then
+                     args[2].MousePos = closest.Character.HumanoidRootPart.Position + Vector3.new(0,1.5,0)
+                  end
+               end
+               return __namecall(unpack(args))
+            end)
+         end)
+      end
+   end,
+})
+
+Rayfield:Notify({
+   Title = "Auto Bounty Hub",
+   Content = "Script carregado com sucesso. Use com responsabilidade!",
+   Duration = 6,
+   Image = 4483362458,
+   Actions = {
+      Ignore = {Name = "OK", Callback = function() end}
+   },
+})
+
+-- Auto Bounty Function
+local function getClosestPlayer()
+   local closest, dist = nil, math.huge
+   for _,player in pairs(game:GetService("Players"):GetPlayers()) do
+      if player ~= game.Players.LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+         local magnitude = (player.Character.HumanoidRootPart.Position - game.Players.LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
+         if magnitude < dist then
+            closest = player
+            dist = magnitude
+         end
+      end
+   end
+   return closest
+end
+
+function AutoBountyStart()
+   spawn(function()
+      while getgenv().AutoBounty do
+         local target = getClosestPlayer()
+         if target and target.Character and target.Character:FindFirstChild("Humanoid") then
+            repeat
+               pcall(function()
+                  local char = game.Players.LocalPlayer.Character
+                  char.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame * CFrame.new(0,0,5)
+                  char:FindFirstChildOfClass("Humanoid"):ChangeState(11)
+               end)
+               wait(0.2)
+            until not target or not target.Character or target.Character.Humanoid.Health <= 0 or not getgenv().AutoBounty
+         end
+         wait(0.5)
+      end
+   end)
+end
